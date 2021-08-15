@@ -35,11 +35,11 @@ We calibrate adaptive designs including BAE, BAS, $BOB_s$,  and $BOB_{avg}$.
 
 * calibration_bae.R: R codes used to calibrate the design **BAE**, and output the optimal design parameters.
 * calibration_bas.R: R codes used to calibrate the design **BAS**, and output the optimal design parameters.
-* calibration_bobs.R: R codes used to calibrate the design **$BOB_s$**, and output the optimal design parameters.
+* calibration_bobs.R: R codes used to calibrate the design **BOBs**, and output the optimal design parameters.
 
-* $BOB_{avg}$ 
+* BOBavg
 
-  This folder contains 3 files used to implement the whole calibration procedure of the design **$BOB_{avg}$** with the following settings: 
+  This folder contains 3 files used to implement the whole calibration procedure of the design **BOBavg** with the following settings: 
 
   * search_1.R: $\mu_T=\pm 0.223$, $p_T \sim unif(0.35,0.65)$
   * search_2.R: $\mu_T=0, p_T=0$ (i.e., power of the design)
