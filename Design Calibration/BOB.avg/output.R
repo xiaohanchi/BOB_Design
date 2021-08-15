@@ -2,8 +2,9 @@
 # BOB: Bayesian Optimal Design for Biosimilar Trials with Co-Primary Endpoints #
 #                                                                              #
 # -Numerical Studies                                                           #
-#  --Design Calibration                                                        #
-#    ---BOB.avg                                                                #
+#  |-Bayesian Adaptive Designs                                                 #
+#    |-Design Calibration                                                      #
+#      |-BOB.avg                                                               #
 ################################################################################
 
 ###===========================Parameter Searching============================###
