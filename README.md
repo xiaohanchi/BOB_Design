@@ -13,7 +13,6 @@ This repository contains R codes used to implement **numerical studies** and the
     - [power(type I error)](#power(type-I-error))
 - [Trial Application](#trial-application)
 - Simulation Settings
-- An Example
 
 ## Numerical Studies
 
