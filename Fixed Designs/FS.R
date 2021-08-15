@@ -2,8 +2,8 @@
 # BOB: Bayesian Optimal Design for Biosimilar Trials with Co-Primary Endpoints #
 #                                                                              #
 # -Numerical Studies                                                           #
-#  --Fixed Designs                                                             #
-#    ---FS                                                                     #
+#  |-Fixed Designs                                                             #
+#    |-FS                                                                      #
 ################################################################################
 
 ###===========================Simulation Settings============================###
