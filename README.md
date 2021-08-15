@@ -6,11 +6,11 @@ This repository contains R codes used to implement **numerical studies** and the
 
 ## Table of Contents
 
-- [Numerical Studies](#numerical studies)
-  - [Design Calibration](#Design Calibration)
-  - [Type I error rate control](#Type I error rate Control)
-  - [Empirical power](#Empirical power)
-- [Trial Application](#trial application)
+- [Numerical Studies](#numerical-studies)
+  - [Design Calibration](#Design-Calibration)
+  - [Type I error rate control](#Type-I-error-rate-Control)
+  - [Empirical power](#Empirical-power)
+- [Trial Application](#trial-application)
 
 ## Numerical Studies
 
