@@ -7,7 +7,7 @@
 ################################################################################
 
 ###===========================Simulation Settings============================###
-maxnsample=400#max sample size
+maxnsample=300#max sample size
 Tmax=4 #stages
 nsample=maxnsample/Tmax#sample size per stage
 pT=0.5
