@@ -1,10 +1,19 @@
+################################################################################
+# BOB: Bayesian Optimal Design for Biosimilar Trials with Co-Primary Endpoints #
+#                                                                              #
+# -Numerical Studies                                                           #
+#  --Design Calibration                                                        #
+#    ---BAS                                                                    #
+################################################################################
+
+###===========================Simulation Settings============================###
 maxnsample=400#max sample size
 Tmax=4 #stages
 nsample=maxnsample/Tmax#sample size per stage
 pR=0.5
 sn=20000
-setwd("D:/Master/summer/0619simu/results/BFS")
 
+###===========================Posterior Function============================###
 Prpd<-function(x){
   b1<-x-0.15
   b2<-x+0.15
@@ -14,7 +23,7 @@ Prpd<-function(x){
   return(r)
 }
 
-###save
+###========================Simulation Implementation=========================###
 for(i in 1:3){
   pT=c(0.35,0.65,0.5)[i]
   for(t in 1:Tmax){
@@ -40,7 +49,8 @@ for(i in 1:3){
   }
 }
 
-###search
+###===========================Parameter Searching============================###
+###Grid Searching
 lambda=seq(0.952,0.953,by = 0.0001)
 len1<-length(lambda)#m
 gamma<-seq(1,1.2,by = 0.02)
@@ -98,6 +108,7 @@ for(c in 1:3){
   }
 }
 
+###Calibration
 TIE<-pmax(errorl,errorr)
 EN<-pmax(muEN_l,muEN_r)
 alpha<-which(TIE<=0.05) #alpha_mu
@@ -109,6 +120,7 @@ filter_r<-order(EP[r],decreasing = T)[1:power_n]
 finalset<-r[filter_r]
 value<-finalset[which.min(EN[finalset])]
 
+### Output
 lambda_n<-value%%length(lambda)
 gamma_n<-ceiling(value/length(lambda))
 cat("(",lambda[lambda_n],",",gamma[gamma_n],")",sep = '')
