@@ -18,11 +18,19 @@ This repository contains R codes used to implement **numerical studies** and the
 
 We calibrate adaptive designs including BAE, BAS, $BOB_s$,  and $BOB_{avg}$.
 
+* `calibration_bae.R`: R codes used to calibrate the design **BAE**, and output the optimal design parameters.
+* `calibration_bas.R`: R codes used to calibrate the design **BAS**, and output the optimal design parameters.
+* `calibration_bobs.R`: R codes used to calibrate the design **$BOB_s$**, and output the optimal design parameters.
 
+* $BOB_{avg}$ 
 
-* calibrate_1: $mu_T=\pm 0.223$, $p_T \sim unif(0.35,0.65)$
-* calibrate_2: muT=0, pT=0 (i.e., power of the design)
-* calibrate_3: $mu_T \sim unif(-0.223,0.223)$, $p_T=0.5\pm 0.15$
+  This folder contains 3 files used to implement the whole calibration procedure of the design **$BOB_{avg}$** with the following settings: 
+
+  * `search_1.R`: $\mu_T=\pm 0.223$, $p_T \sim unif(0.35,0.65)$
+  * `search_2.R`: $\mu_T=0, p_T=0$ (i.e., power of the design)
+  * `search_3.R`: $\mu_T \sim unif(-0.223,0.223)$, $p_T=0.5\pm 0.15$
+
+  and the file `output.R` used to output the optimal design parameters.
 
 ### Type I error rate Control
 
@@ -41,6 +49,7 @@ We calibrate adaptive designs including BAE, BAS, $BOB_s$,  and $BOB_{avg}$.
 This module depends upon a knowledge of [Markdown]().
 
 ```
+	
 ```
 
 
@@ -64,7 +73,7 @@ PRs accepted.
 
 Small note: If editing the Readme, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification.
 
-### Any optional sections
+
 
 ## License
 
