@@ -155,4 +155,4 @@ value<-finalset[which.min(EN[finalset])]
 ### Output
 lambda_n<-value%%length(lambda)
 gamma_n<-ceiling(value/length(lambda))
-cat("(",lambda[lambda_n],",",gamma[gamma_n],")",sep = '')
+cat("Optimal parameters for BAE:(",lambda[lambda_n],",",gamma[gamma_n],")",sep = '')
