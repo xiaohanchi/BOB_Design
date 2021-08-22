@@ -2,7 +2,7 @@
 
 BOB design is a Bayesian optimal design proposed for biosimilar trials with co-primary endpoints. 
 
-This repository contains R codes used to implement **numerical studies** and the **trial application** in the corresponding paper.
+This repository contains R codes used to implement **numerical studies** in the corresponding paper.
 
 ## Table of Contents
 
@@ -12,20 +12,23 @@ This repository contains R codes used to implement **numerical studies** and the
   - [Bayesian Adaptive Designs](#Bayesian-Adaptive-Designs)
     - [Design Calibration](#Design-Calibration)
     - [power(type I error)](#power(type-I-error))
-- [Trial Application](#trial-application)
+
+* [Authors and Reference](#Authors-and-Reference)
 
 ## Simulation Settings
 
 Firstly, some important setting parameters and their meanings are explained in this document, as follows:
 
-* maxnsample: $n_J$
-* Tmax: $J$
-* nsample: $n_j$
-* tau2: $\tau^2$
-* rho: $\rho$
-* sn: number of replicated trials in this simulation study
-* pR (pT): $p_R (p_T)$
-* overallmuR (overallmuT) $\mu_R (\mu_T)$
+* `maxnsample`: $n_J$
+* `Tmax`: $J$
+* `nsample`: $n_j$
+* `tau2`: $\tau^2$
+* `rho`: $\rho$
+* `sn`: number of replicated trials in this simulation study
+* `pR` (`pT`): $p_R (p_T)$
+* `overallmuR` (`overallmuT`) $\mu_R (\mu_T)$
+
+
 
 ## Numerical Studies
 
@@ -87,12 +90,6 @@ Rscript simu_bob.R
 #The power (or type I error rate) of the design BOB:
 #Expected Sample Size(EN):
 ```
-
-
-
-## Trial Application
-
-
 
 
 
