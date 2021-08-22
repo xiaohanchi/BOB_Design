@@ -25,8 +25,8 @@ Firstly, some important setting parameters and their meanings are explained in t
 * `tau2`: $\tau^2$
 * `rho`: $\rho$
 * `sn`: number of replicated trials in this simulation study
-* `pR` (`pT`): $p_R (p_T)$
-* `overallmuR` (`overallmuT`) $\mu_R (\mu_T)$
+* `pR(pT)`: $p_R (p_T)$
+* `overallmuR(overallmuT)`: $\mu_R (\mu_T)$
 
 
 
