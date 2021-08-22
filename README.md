@@ -6,13 +6,26 @@ This repository contains R codes used to implement **numerical studies** and the
 
 ## Table of Contents
 
+- [Simulation Settings](#Simulation-Settings)
 - [Numerical Studies](#numerical-studies)
   - [Fixed Designs](#Fixed-Designs)
   - [Bayesian Adaptive Designs](#Bayesian-Adaptive-Designs)
     - [Design Calibration](#Design-Calibration)
     - [power(type I error)](#power(type-I-error))
 - [Trial Application](#trial-application)
-- Simulation Settings
+
+## Simulation Settings
+
+Firstly, some important setting parameters and their meanings are explained in this document, as follows:
+
+* maxnsample: $n_J$
+* Tmax: $J$
+* nsample: $n_j$
+* tau2: $\tau^2$
+* rho: $\rho$
+* sn: number of replicated trials in this simulation study
+* pR (pT): $p_R (p_T)$
+* overallmuR (overallmuT) $\mu_R (\mu_T)$
 
 ## Numerical Studies
 
