@@ -18,22 +18,22 @@ This repository contains R codes used to implement **numerical studies** and the
 
 ### Fixed Designs
 
-description xxx
+This folder contains R codes used to implement three fixed-sample designs considered in the paper.
 
-* FE.R:
-* FS.R:
-* FES.R:
+Fixed-sample designs includes two univariate designs such as FE and FS and a bivariate design FES. Among them, **FE** and **FS** are frequentist fixed-sample designs that adopt the frequentist two one-sided tests (TOST) procedure for both sides to test the respective efficacy and safety endpoints, and **FES** is a frequentist fixed-sample design that combines the FE and FS designs to test both efficacy and safety endpoints. 
 
 ### Bayesian Adaptive Designs
 
-description xxx
+This folder contains R codes used to implement four Bayesian adaptive designs considered in the paper. The procedure of Bayesian designs requires two main steps: (1) design calibration and (2) design implementation.
 
 #### Design Calibration
 
-We calibrate adaptive designs including BAE, BAS, $BOB_s$,  and $BOB_{avg}$.
+R codes in this folder help us to calibrate the design and return the optimal design parameters ($\lambda, \gamma$). We calibrate Bayesian adaptive designs including BAE, BAS, BOBs,  and BOBavg. In detail, BAE and BAS are Bayesian group-sequential designs that consider the respective efficacy and safety as a single primary endpoint. BOBs  and BOBavg are proposed BOB designs.
 
 * calibration_bae.R: R codes used to calibrate the design **BAE**, and output the optimal design parameters.
+
 * calibration_bas.R: R codes used to calibrate the design **BAS**, and output the optimal design parameters.
+
 * calibration_bobs.R: R codes used to calibrate the design **BOBs**, and output the optimal design parameters.
 
 * BOBavg
@@ -46,15 +46,34 @@ We calibrate adaptive designs including BAE, BAS, $BOB_s$,  and $BOB_{avg}$.
 
   and the file output.R used to output the optimal design parameters.
 
-#### **power(type I error)**
+For example, for the proposed BOBs design, simply run the corresponding R script like
+
+```shell
+Rscript calibration_bobs.R
+```
+
+the optimal design parameters will be output as follows:
+
+```R
+#Optimal parameters for BOBs:(0.9408,1.06)
+```
 
 
 
-* simu_bae.R:
-* simu_bas.R:
-* simu_bob.R:
+#### Design implementation: **power(type I error)**
 
+Given the resulted optimal design parameters, simulation can be performed to obtain the operating characteristics such as the power (or the type I error rate) and the expected sample size.
 
+For example, for the proposed BOBs design, 
+
+```shell
+Rscript simu_bob.R
+```
+
+```R
+#The power (or type I error rate) of the design BOB:
+#Expected Sample Size(EN):
+```
 
 
 
