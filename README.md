@@ -71,7 +71,7 @@ Rscript calibration_bobs.R
 the optimal design parameters will be output as follows:
 
 ```R
-#Optimal parameters for BOBs:(0.9408,1.06)
+#Optimal parameters for BOBs:
 ```
 
 
