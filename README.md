@@ -8,7 +8,7 @@ This repository contains R codes used to implement **numerical studies** in the 
 
 - [Simulation Settings](#Simulation-Settings)
 - [Numerical Studies](#numerical-studies)
-  - [Fixed Designs](#Fixed-Designs)
+  - [Frequentist Fixed Designs](#Frequentist-Fixed-Designs)
   - [Bayesian Adaptive Designs](#Bayesian-Adaptive-Designs)
     - [Design Calibration](#Design-Calibration)
     - [power(type I error)](#power(type-I-error))
@@ -32,11 +32,11 @@ Firstly, some important setting parameters and their meanings are explained in t
 
 ## Numerical Studies
 
-### Fixed Designs
+### Frequentist Fixed Designs
 
 This folder contains R codes used to implement three fixed-sample designs considered in the paper.
 
-Fixed-sample designs includes two univariate designs such as FE and FS and a bivariate design FES. Among them, **FE** and **FS** are frequentist fixed-sample designs that adopt the frequentist two one-sided tests (TOST) procedure for both sides to test the respective efficacy and safety endpoints, and **FES** is a frequentist fixed-sample design that combines the FE and FS designs to test both efficacy and safety endpoints. 
+Frequentist fixed-sample designs include two univariate designs such as FE and FS and a bivariate design FES. Among them, **FE** adopts a two-sample t-test approach for the scaled average bioequivalence test to evaluate the biosimilarity of the efficacy endpoint, **FS** applies the frequentist two one-sided tests (TOST) procedure for both sides to test the safety endpoints, and **FES** combines the FE and FS designs to test both efficacy and safety endpoints. 
 
 ### Bayesian Adaptive Designs
 
