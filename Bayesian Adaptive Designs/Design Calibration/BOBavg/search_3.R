@@ -8,19 +8,21 @@
 ################################################################################
 
 ###===========================Simulation Settings============================###
-library(mvtnorm)
-maxnsample=300#max sample size
+library(parallel)
+library(invgamma)
+maxnsample=160#max sample size
 Tmax=4 #stages
 nsample=maxnsample/Tmax#sample size per stage
 pT=0.5
 pR=0.5
 overallmuT<- 0
 overallmuR<- 0
-deltap <- -0.15 #or 0.15
+deltap <- -0.2 #or 0.2
 tau2=0.8^2
 rho=0
 pn=20000
 sn=20000
+x<-seq(-3,3,by=0.0001)#sample from posterior
 
 solvemu<-function(p,x,tau2,rho){
   A=matrix(c(p,(1-p),1,-1),nrow = 2,byrow = T)
@@ -32,18 +34,59 @@ solvemu<-function(p,x,tau2,rho){
 muR<-solvemu(pR,overallmuR,tau2,rho)
 sigmaR<-sqrt(tau2-pR*(1-pR)*(muR[1]-muR[2])**2)
 
+###===========================Posterior Function============================###
+posterior_mu1T<-function(mu,n){
+  xstd<-(mu-xbar1T[n])/sdT[n]
+  r<-dt(xstd,addsample)/sdT[n]
+  return(r)
+}
+posterior_mu2T<-function(mu,n){
+  xstd<-(mu-xbar2T[n])/sdT[n]
+  r<-dt(xstd,addsample)/sdT[n]
+  return(r)
+}
+posterior_mu1R<-function(mu,n){
+  xstd<-(mu-xbar1R[n])/sdR[n]
+  r<-dt(xstd,addsample)/sdR[n]
+  return(r)
+}
+posterior_mu2R<-function(mu,n){
+  xstd<-(mu-xbar2R[n])/sdR[n]
+  r<-dt(xstd,addsample)/sdR[n]
+  return(r)
+}
+
 ###========================Simulation Implementation=========================###
-mup_bios<-vector(mode="numeric",length=sn)
-deltamu<-runif(sn,-0.223,0.223)
+####Pre-allocated Memory
+distpT<-distpR<-pd<-matrix(NA,pn,sn)
+dist1T<-dist2T<-dist1R<-dist2R<-distsigmaR<-matrix(NA,pn,sn)
+pdbios<-cmud<-list(NA)
+length(pdbios)<-length(cmud)<-sn
+p_bios<-vector(mode="numeric",length=sn)
+
+####parallel
+cores <- detectCores()
+
+deltamu<-runif(sn,-0.32,0.32)
 muT<-sapply(1:sn, function(r) solvemu((pT+deltap),(overallmuT+deltamu[r]),tau2,rho))
 sigmaT<-sqrt(tau2-(pT+deltap)*(1-(pT+deltap))*(muT[1,]-muT[2,])**2)
 for(t in 1:Tmax){
-  addsample=nsample*t#added up sample
+  addsample=nsample*t #added up sample
   set.seed(233+10*t)
   if(t==1){
-    sampleTt<-sapply(1:sn, function(r) rbinom(nsample,1,(pT+deltap)))
+    sampleTt<-sapply(1:sn, function(r) {
+      s<-rbinom(nsample,1,(pT+deltap))
+      if(sum(s)==0|sum(s)==1){s[1]<-s[2]<-1}
+      else if(sum(s)==nsample|sum(s)==(nsample-1)){s[1]<-s[2]<-0}
+      return(s)
+    })
     sampleTe<-sapply(1:sn, function(r) rnorm(nsample,(sampleTt[,r]*muT[1,r]+(1-sampleTt[,r])*muT[2,r]),sigmaT[r]))
-    sampleRt<-sapply(1:sn, function(r) rbinom(nsample,1,pR))
+    sampleRt<-sapply(1:sn, function(r) {
+      s<-rbinom(nsample,1,pR)
+      if(sum(s)==0|sum(s)==1){s[1]<-s[2]<-1}
+      else if(sum(s)==nsample|sum(s)==(nsample-1)){s[1]<-s[2]<-0}
+      return(s)
+    })
     sampleRe<-sapply(1:sn, function(r) rnorm(nsample,(sampleRt[,r]*muR[1]+(1-sampleRt[,r])*muR[2]),sigmaR))
   }else{
     sampleTt2<-sapply(1:sn, function(r) rbinom(nsample,1,(pT+deltap)))
@@ -55,41 +98,61 @@ for(t in 1:Tmax){
     sampleRt<-rbind(sampleRt,sampleRt2)
     sampleRe<-rbind(sampleRe,sampleRe2)
   }
-  
   sumyT<-colSums(sampleTt)
   sumyR<-colSums(sampleRt)
-  pThat<-sumyT/addsample
-  pRhat<-sumyR/addsample
-  mean_deltap<-(sumyT-sumyR)/(addsample+2)
-  var_deltap<-((sumyT+1)*(addsample-sumyT+1)+(sumyR+1)*(addsample-sumyR+1))/((addsample+2)^2*(addsample+3))
-  #mu
-  xbarT<-sapply(1:sn,function(r) mean(sampleTe[,r]))
-  varT<-sapply(1:sn,function(r) var(sampleTe[,r]))
-  xbarR<-sapply(1:sn,function(r) mean(sampleRe[,r]))
-  varR<-sapply(1:sn,function(r) var(sampleRe[,r]))
-  mean_deltamu<-xbarT-xbarR
-  var_deltamu<-(addsample-1)/(addsample^2)*(varT+varR)
+  
+  cl <- makeCluster(cores)
+  clusterExport(cl, c('pn', 'sumyT', 'sumyR', 'addsample','sn'))
+  distpT<-parSapply(cl,1:sn,function(r) rbeta(pn,(sumyT[r]+1),(addsample-sumyT[r]+1)))
+  distpR<-parSapply(cl,1:sn,function(r) rbeta(pn,(sumyR[r]+1),(addsample-sumyR[r]+1)))
+  stopCluster(cl)
+  
+  pd<-distpT-distpR
+  pdbios<-lapply(1:sn, function(r) which(abs(pd[,r])<0.20))
+  p_bios<-sapply(1:sn, function(r) length(pdbios[[r]])/pn)
   
   #mu1T
   datax1T <- lapply(1:sn,function(r) sampleTe[which(sampleTt[,r]==1),r])
   xbar1T<-sapply(1:sn,function(r) mean(datax1T[[r]]))
+  var1T<-sapply(1:sn,function(r) var(datax1T[[r]]))
   #mu2T
   datax2T <- lapply(1:sn,function(r) sampleTe[which(sampleTt[,r]==0),r])
   xbar2T<-sapply(1:sn,function(r) mean(datax2T[[r]]))
+  var2T<-sapply(1:sn,function(r) var(datax2T[[r]]))
+  
+  sdT <- sqrt(((sumyT-1)*var1T+(addsample-sumyT-1)*var2T)/(addsample*(addsample-sumyT)))
   #mu1R
   datax1R <- lapply(1:sn,function(r) sampleRe[which(sampleRt[,r]==1),r])
   xbar1R<-sapply(1:sn,function(r) mean(datax1R[[r]]))
+  var1R<-sapply(1:sn,function(r) var(datax1R[[r]]))
   #mu2R
   datax2R <- lapply(1:sn,function(r) sampleRe[which(sampleRt[,r]==0),r])
   xbar2R<-sapply(1:sn,function(r) mean(datax2R[[r]]))
-  rho_deltahat<-(pThat*(1-pThat)*(xbar1T-xbar2T)+pRhat*(1-pRhat)*(xbar1R-xbar2R))/sqrt((pThat*(1-pThat)+pRhat*(1-pRhat))*(varT+varR))
-  for(i in 1:sn){
-    Sig_joint<-matrix(c(var_deltap[i],rho_deltahat[i]*sqrt(var_deltap[i]*var_deltamu[i]),
-                        rho_deltahat[i]*sqrt(var_deltap[i]*var_deltamu[i]),var_deltamu[i]),
-                      nrow=2,ncol=2,byrow=T)
-    mup_bios[i]<-pmvnorm(lower=c(-0.15,-0.223), upper=c(0.15,0.223), 
-                         mean=c(mean_deltap[i],mean_deltamu[i]), 
-                         sigma=Sig_joint, alg=Miwa())[1]
-  }
+  var2R<-sapply(1:sn,function(r) var(datax2R[[r]]))
+  
+  sdR <- sqrt(((sumyR-1)*var1R+(addsample-sumyR-1)*var2R)/(addsample*(addsample-sumyR)))
+  scaleR<- 1/2*((sumyR-1)*var1R+(addsample-sumyR-1)*var2R)
+  #sample
+  cl <- makeCluster(cores)
+  clusterEvalQ(cl,library(invgamma))
+  clusterExport(cl, c('pn','sn','x','addsample',
+                      'posterior_mu1T','posterior_mu2T','posterior_mu1R','posterior_mu2R',
+                      'xbar1T','sdT','xbar2T','xbar1R','sdR','xbar2R','scaleR'))
+  dist1T<-parSapply(cl,1:sn,function(r) sample(x,pn,replace = T,prob=posterior_mu1T(x,r)))
+  dist2T<-parSapply(cl,1:sn,function(r) sample(x,pn,replace = T,prob=posterior_mu2T(x,r)))
+  dist1R<-parSapply(cl,1:sn,function(r) sample(x,pn,replace = T,prob=posterior_mu1R(x,r)))
+  dist2R<-parSapply(cl,1:sn,function(r) sample(x,pn,replace = T,prob=posterior_mu2R(x,r)))
+  distsigmaR2<-parSapply(cl,1:sn,function(r) rinvgamma(n=pn,shape=(addsample/2),rate=scaleR[r]))
+  stopCluster(cl)
+  
+  cmud<-lapply(1:sn, function(r){
+    d<-(distpT[pdbios[[r]],r]*dist1T[pdbios[[r]],r] + dist2T[pdbios[[r]],r] - dist2T[pdbios[[r]],r]*distpT[pdbios[[r]],r]) - 
+      (distpR[pdbios[[r]],r]*dist1R[pdbios[[r]],r] + dist2R[pdbios[[r]],r] - dist2R[pdbios[[r]],r]*distpR[pdbios[[r]],r])
+    tauR2<-distsigmaR2[pdbios[[r]],r]+distpR[pdbios[[r]],r]*(1-distpR[pdbios[[r]],r])*(dist1R[pdbios[[r]],r]-dist2R[pdbios[[r]],r])^2
+    d_scale<-d/sqrt(tauR2)
+    return(d_scale)
+  })
+  mu_bios<-sapply(1:sn, function(r) length(which(abs(cmud[[r]]) < 0.4))/length(pdbios[[r]]))
+  mup_bios<-p_bios*mu_bios
   write.table(mup_bios,file = paste("deltap",deltap,"s",t,".txt",sep = ''))
 }
