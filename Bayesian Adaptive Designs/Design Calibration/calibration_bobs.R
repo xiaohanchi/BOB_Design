@@ -8,8 +8,7 @@
 ################################################################################
 
 ###===========================Simulation Settings============================###
-library(mvtnorm)
-maxnsample=300#max sample size
+maxnsample=160#max sample size
 Tmax=4 #stages
 nsample=maxnsample/Tmax#sample size per stage
 tau2=0.8^2
@@ -17,7 +16,7 @@ rho=0
 sn=20000
 pR=0.5
 pT=0.5
-overallmuT<- 0.223
+overallmuT<- 0.32
 overallmuR<- 0
 
 solvemu<-function(p,x,tau2,rho){
@@ -26,15 +25,58 @@ solvemu<-function(p,x,tau2,rho){
   mu<-solve(A,b)
   return(mu)
 }
-
 muR<-solvemu(pR,overallmuR,tau2,rho)
 sigmaR<-sqrt(tau2-pR*(1-pR)*(muR[1]-muR[2])**2)
 
+###===============================Function================================###
+##asymptotic cdf of muT-muR
+Pr_dmu<-function(x){
+  mean=xbarT - xbarR
+  sd=sqrt((nR-1)*(varT+varR)/nR^2)
+  r<-pnorm(q = x,mean = mean,sd = sd)
+  return(r)
+}
+##posterior of p
+Prpd<-function(x){
+  b1<-x-0.20
+  b2<-x+0.20
+  r1<-dbeta(x,(sumyR[i]+1),(addsample-sumyR[i]+1))
+  r2<-pbeta(b2,(sumyT[i]+1),(addsample-sumyT[i]+1)) - pbeta(b1,(sumyT[i]+1),(addsample-sumyT[i]+1))
+  r<-r1*r2
+  return(r)
+}
+
+##pdf of (delta*sigmaR)
+dist_delta_sigmaR<-function(delta,nR,varR,y){
+  alpha=nR/2
+  beta=(nR-1)*varR/2
+  loga<-alpha*log(beta)
+  logb<-2*alpha*log(abs(delta))+log(2)
+  if(delta>0){
+    logc<-(2*alpha+1)*log(y)
+  }else if(delta<0){
+    logc<-(2*alpha+1)*log(-y)
+  }
+  log_val<-loga+logb-logc-log(gamma(alpha))-beta*delta^2/y^2
+  val<-exp(log_val)
+  return(val)
+}
+
+##integrand of upper or lower limit
+#delta here = (muT-muR)/sigma0
+f_upper<-function(y2){
+  (1-Pr_dmu(y2))*dist_delta_sigmaR(delta = 0.4,nR = nR,varR = varR,y = y2)
+}
+
+f_lower<-function(y1){
+  Pr_dmu(y1)*dist_delta_sigmaR(delta = -0.4,nR = nR,varR = varR,y = y1)
+}
+
 ###========================Simulation Implementation=========================###
 mup_bios<-vector(mode="numeric",length=sn)
-### Fix muT at +/-0.223
-for(i in 1:31){
-  pT=0.35+0.01*(i-1)
+### Fix muT at +/-0.32
+for(i in 1:41){
+  pT=0.3+0.01*(i-1)
   muT<-solvemu(pT,overallmuT,tau2,rho)
   sigmaT<-sqrt(tau2-pT*(1-pT)*(muT[1]-muT[2])**2)
   for(t in 1:Tmax){
@@ -55,47 +97,33 @@ for(i in 1:31){
       sampleTe<-rbind(sampleTe,sampleTe2)
       sampleRe<-rbind(sampleRe,sampleRe2)
     }
-    sumyT<-colSums(sampleTt)
-    sumyR<-colSums(sampleRt)
-    pThat<-sumyT/addsample
-    pRhat<-sumyR/addsample
-    mean_deltap<-(sumyT-sumyR)/(addsample+2)
-    var_deltap<-((sumyT+1)*(addsample-sumyT+1)+(sumyR+1)*(addsample-sumyR+1))/((addsample+2)^2*(addsample+3))
-    #mu
-    xbarT<-sapply(1:sn,function(r) mean(sampleTe[,r]))
-    varT<-sapply(1:sn,function(r) var(sampleTe[,r]))
-    xbarR<-sapply(1:sn,function(r) mean(sampleRe[,r]))
-    varR<-sapply(1:sn,function(r) var(sampleRe[,r]))
-    mean_deltamu<-xbarT-xbarR
-    var_deltamu<-(addsample-1)/(addsample^2)*(varT+varR)
+  #p
+  sumyT<-colSums(sampleTt)
+  sumyR<-colSums(sampleRt)
+  p_bios<-vector(mode="numeric",length=sn)
+  ##mu
+  mu_bios<-vector(mode="numeric",length=sn)
+  for(i in 1:sn){
+    dataxT <- sampleTe[,i]
+    nT<-length(dataxT)
+    xbarT<-mean(dataxT)
+    varT<-var(dataxT)
     
-    #mu1T
-    datax1T <- lapply(1:sn,function(r) sampleTe[which(sampleTt[,r]==1),r])
-    xbar1T<-sapply(1:sn,function(r) mean(datax1T[[r]]))
-    #mu2T
-    datax2T <- lapply(1:sn,function(r) sampleTe[which(sampleTt[,r]==0),r])
-    xbar2T<-sapply(1:sn,function(r) mean(datax2T[[r]]))
-    #mu1R
-    datax1R <- lapply(1:sn,function(r) sampleRe[which(sampleRt[,r]==1),r])
-    xbar1R<-sapply(1:sn,function(r) mean(datax1R[[r]]))
-    #mu2R
-    datax2R <- lapply(1:sn,function(r) sampleRe[which(sampleRt[,r]==0),r])
-    xbar2R<-sapply(1:sn,function(r) mean(datax2R[[r]]))
-    rho_deltahat<-(pThat*(1-pThat)*(xbar1T-xbar2T)+pRhat*(1-pRhat)*(xbar1R-xbar2R))/sqrt((pThat*(1-pThat)+pRhat*(1-pRhat))*(varT+varR))
-    for(i in 1:sn){
-      Sig_joint<-matrix(c(var_deltap[i],rho_deltahat[i]*sqrt(var_deltap[i]*var_deltamu[i]),
-                          rho_deltahat[i]*sqrt(var_deltap[i]*var_deltamu[i]),var_deltamu[i]),
-                        nrow=2,ncol=2,byrow=T)
-      mup_bios[i]<-pmvnorm(lower=c(-0.15,-0.223), upper=c(0.15,0.223), 
-                           mean=c(mean_deltap[i],mean_deltamu[i]), 
-                           sigma=Sig_joint, alg=Miwa())[1]
-    }
-    write.table(mup_bios,file = paste("muT",overallmuT,"pT",pT,"s",t,".txt",sep = ''))
+    dataxR <- sampleRe[,i]
+    nR<-length(dataxR)
+    xbarR<-mean(dataxR)
+    varR<-var(dataxR)
+    
+    mu_bios[i]<- 1 - integrate(f_upper,0,1)$value - integrate(f_lower,-1,0)$value
+    p_bios[i]<-integrate(Prpd,0,1)$value
+  }
+  mup_bios<-mu_bios*p_bios
+  write.table(mup_bios,file = paste("muT",overallmuT,"pT",pT,"s",t,".txt",sep = ''))
   }
 }
-### Fix pT at 0.35 or 0.65
-for(i in 1:45){
-  overallmuT<- -0.22+0.01*(i-1)
+### Fix pT at 0.30 or 0.70
+for(i in 1:41){
+  overallmuT<- -0.32+0.02*(i-1)
   muT<-solvemu(pT,overallmuT,tau2,rho)
   sigmaT<-sqrt(tau2-pT*(1-pT)*(muT[1]-muT[2])**2)
   for(t in 1:Tmax){
@@ -116,42 +144,28 @@ for(i in 1:45){
       sampleTe<-rbind(sampleTe,sampleTe2)
       sampleRe<-rbind(sampleRe,sampleRe2)
     }
-    sumyT<-colSums(sampleTt)
-    sumyR<-colSums(sampleRt)
-    pThat<-sumyT/addsample
-    pRhat<-sumyR/addsample
-    mean_deltap<-(sumyT-sumyR)/(addsample+2)
-    var_deltap<-((sumyT+1)*(addsample-sumyT+1)+(sumyR+1)*(addsample-sumyR+1))/((addsample+2)^2*(addsample+3))
-    #mu
-    xbarT<-sapply(1:sn,function(r) mean(sampleTe[,r]))
-    varT<-sapply(1:sn,function(r) var(sampleTe[,r]))
-    xbarR<-sapply(1:sn,function(r) mean(sampleRe[,r]))
-    varR<-sapply(1:sn,function(r) var(sampleRe[,r]))
-    mean_deltamu<-xbarT-xbarR
-    var_deltamu<-(addsample-1)/(addsample^2)*(varT+varR)
+  #p
+  sumyT<-colSums(sampleTt)
+  sumyR<-colSums(sampleRt)
+  p_bios<-vector(mode="numeric",length=sn)
+  ##mu
+  mu_bios<-vector(mode="numeric",length=sn)
+  for(i in 1:sn){
+    dataxT <- sampleTe[,i]
+    nT<-length(dataxT)
+    xbarT<-mean(dataxT)
+    varT<-var(dataxT)
     
-    #mu1T
-    datax1T <- lapply(1:sn,function(r) sampleTe[which(sampleTt[,r]==1),r])
-    xbar1T<-sapply(1:sn,function(r) mean(datax1T[[r]]))
-    #mu2T
-    datax2T <- lapply(1:sn,function(r) sampleTe[which(sampleTt[,r]==0),r])
-    xbar2T<-sapply(1:sn,function(r) mean(datax2T[[r]]))
-    #mu1R
-    datax1R <- lapply(1:sn,function(r) sampleRe[which(sampleRt[,r]==1),r])
-    xbar1R<-sapply(1:sn,function(r) mean(datax1R[[r]]))
-    #mu2R
-    datax2R <- lapply(1:sn,function(r) sampleRe[which(sampleRt[,r]==0),r])
-    xbar2R<-sapply(1:sn,function(r) mean(datax2R[[r]]))
-    rho_deltahat<-(pThat*(1-pThat)*(xbar1T-xbar2T)+pRhat*(1-pRhat)*(xbar1R-xbar2R))/sqrt((pThat*(1-pThat)+pRhat*(1-pRhat))*(varT+varR))
-    for(i in 1:sn){
-      Sig_joint<-matrix(c(var_deltap[i],rho_deltahat[i]*sqrt(var_deltap[i]*var_deltamu[i]),
-                          rho_deltahat[i]*sqrt(var_deltap[i]*var_deltamu[i]),var_deltamu[i]),
-                        nrow=2,ncol=2,byrow=T)
-      mup_bios[i]<-pmvnorm(lower=c(-0.15,-0.223), upper=c(0.15,0.223), 
-                           mean=c(mean_deltap[i],mean_deltamu[i]), 
-                           sigma=Sig_joint, alg=Miwa())[1]
-    }
-    write.table(mup_bios,file = paste("muT",overallmuT,"pT",pT,"s",t,".txt",sep = ''))
+    dataxR <- sampleRe[,i]
+    nR<-length(dataxR)
+    xbarR<-mean(dataxR)
+    varR<-var(dataxR)
+    
+    mu_bios[i]<- 1 - integrate(f_upper,0,1)$value - integrate(f_lower,-1,0)$value
+    p_bios[i]<-integrate(Prpd,0,1)$value
+  }
+  mup_bios<-mu_bios*p_bios
+  write.table(mup_bios,file = paste("muT",overallmuT,"pT",pT,"s",t,".txt",sep = ''))
   }
 }
 
@@ -162,7 +176,7 @@ overallmuT=0
 muT<-solvemu(pT,overallmuT,tau2,rho)
 sigmaT<-sqrt(tau2-pT*(1-pT)*(muT[1]-muT[2])**2)
 for(t in 1:Tmax){
-  addsample=nsample*t#added up sample size at the current stage
+  addsample=nsample*t
   set.seed(233+10*t)
   if(t==1){
     sampleTt<-sapply(1:sn, function(r) rbinom(nsample,1,pT))
@@ -179,52 +193,39 @@ for(t in 1:Tmax){
     sampleTe<-rbind(sampleTe,sampleTe2)
     sampleRe<-rbind(sampleRe,sampleRe2)
   }
+  #p
   sumyT<-colSums(sampleTt)
   sumyR<-colSums(sampleRt)
-  pThat<-sumyT/addsample
-  pRhat<-sumyR/addsample
-  mean_deltap<-(sumyT-sumyR)/(addsample+2)
-  var_deltap<-((sumyT+1)*(addsample-sumyT+1)+(sumyR+1)*(addsample-sumyR+1))/((addsample+2)^2*(addsample+3))
-  #mu
-  xbarT<-sapply(1:sn,function(r) mean(sampleTe[,r]))
-  varT<-sapply(1:sn,function(r) var(sampleTe[,r]))
-  xbarR<-sapply(1:sn,function(r) mean(sampleRe[,r]))
-  varR<-sapply(1:sn,function(r) var(sampleRe[,r]))
-  mean_deltamu<-xbarT-xbarR
-  var_deltamu<-(addsample-1)/(addsample^2)*(varT+varR)
-  
-  #mu1T
-  datax1T <- lapply(1:sn,function(r) sampleTe[which(sampleTt[,r]==1),r])
-  xbar1T<-sapply(1:sn,function(r) mean(datax1T[[r]]))
-  #mu2T
-  datax2T <- lapply(1:sn,function(r) sampleTe[which(sampleTt[,r]==0),r])
-  xbar2T<-sapply(1:sn,function(r) mean(datax2T[[r]]))
-  #mu1R
-  datax1R <- lapply(1:sn,function(r) sampleRe[which(sampleRt[,r]==1),r])
-  xbar1R<-sapply(1:sn,function(r) mean(datax1R[[r]]))
-  #mu2R
-  datax2R <- lapply(1:sn,function(r) sampleRe[which(sampleRt[,r]==0),r])
-  xbar2R<-sapply(1:sn,function(r) mean(datax2R[[r]]))
-  rho_deltahat<-(pThat*(1-pThat)*(xbar1T-xbar2T)+pRhat*(1-pRhat)*(xbar1R-xbar2R))/sqrt((pThat*(1-pThat)+pRhat*(1-pRhat))*(varT+varR))
+  p_bios<-vector(mode="numeric",length=sn)
+  ##mu
+  mu_bios<-vector(mode="numeric",length=sn)
   for(i in 1:sn){
-    Sig_joint<-matrix(c(var_deltap[i],rho_deltahat[i]*sqrt(var_deltap[i]*var_deltamu[i]),
-                        rho_deltahat[i]*sqrt(var_deltap[i]*var_deltamu[i]),var_deltamu[i]),
-                      nrow=2,ncol=2,byrow=T)
-    mup_bios[i]<-pmvnorm(lower=c(-0.15,-0.223), upper=c(0.15,0.223), 
-                         mean=c(mean_deltap[i],mean_deltamu[i]), 
-                         sigma=Sig_joint, alg=Miwa())[1]
+    dataxT <- sampleTe[,i]
+    nT<-length(dataxT)
+    xbarT<-mean(dataxT)
+    varT<-var(dataxT)
+    
+    dataxR <- sampleRe[,i]
+    nR<-length(dataxR)
+    xbarR<-mean(dataxR)
+    varR<-var(dataxR)
+    
+    mu_bios[i]<- 1 - integrate(f_upper,0,1)$value - integrate(f_lower,-1,0)$value
+    p_bios[i]<-integrate(Prpd,0,1)$value
   }
+  mup_bios<-mu_bios*p_bios
   write.table(mup_bios,file = paste("muT",overallmuT,"pT",pT,"s",t,".txt",sep = ''))
 }
 
+
 ###===========================Parameter Searching============================###
 ###Find maximum type I error
-#Fix muT at +/-0.223
-power<-matrix(NA,31,4)
-for(m in 1:31){
+#Fix muT at +/-0.32
+power<-matrix(NA,41,4)
+for(m in 1:41){
   for(n in 1:2){
-    overallmuT=c(-0.223,0.223)[n]
-    pT=0.35+0.01*(m-1)
+    overallmuT=c(-0.32,0.32)[n]
+    pT=0.3+0.01*(m-1)
     muT<-solvemu(pT,overallmuT,tau2,rho)
     sigmaT<-sqrt(tau2-pT*(1-pT)*(muT[1]-muT[2])**2)
     nextsn<-sn
@@ -260,16 +261,16 @@ for(m in 1:31){
     }
   }
 }
-colnames(power)<-c("TIE(pT=0.35)","EN","TIE(pT=0.65)","EN")
+colnames(power)<-c("TIE(muT=-0.32)","EN","TIE(muT=0.32)","EN")
 power_muT<-power
 max_TIE1<-max(power_muT[,c(1,3)])
 
-#Fix pT at 0.35 or 0.65
-power<-matrix(NA,45,4)
-for(m in 1:45){
+#Fix pT at 0.30 or 0.70
+power<-matrix(NA,33,4)
+for(m in 1:33){
   for(n in 1:2){
-    pT=c(0.35,0.65)[n]
-    overallmuT=-0.22+0.01*(m-1)
+    pT=c(0.3,0.7)[n]
+    overallmuT=-0.32+0.02*(m-1)
     muT<-solvemu(pT,overallmuT,tau2,rho)
     sigmaT<-sqrt(tau2-pT*(1-pT)*(muT[1]-muT[2])**2)
     nextsn<-sn
@@ -305,16 +306,16 @@ for(m in 1:45){
     }
   }
 }
-colnames(power)<-c("TIE(pT=0.35)","EN","TIE(pT=0.65)","EN")
+colnames(power)<-c("TIE(pT=0.3)","EN","TIE(pT=0.7)","EN")
 power_pT<-power
 max_TIE2<-max(power_pT[,c(1,3)])
 
 if(max_TIE1>=max_TIE2){
-  muT_c<-c(-0.223,0.223)[ceiling(which.max(power_muT[,c(1,3)])/31)]
-  pT_c<-matrix(rep(seq(0.35,0.65,by = 0.01),4),31,4)[which.max(power_muT[,c(1,3)])]
+  muT_c<-c(-0.32,0.32)[ceiling(which.max(power_muT[,c(1,3)])/41)]
+  pT_c<-matrix(rep(seq(0.3,0.7,by = 0.01),4),41,4)[which.max(power_muT[,c(1,3)])]
 }else{
-  muT_c<-matrix(rep(seq(-0.22,0.22,by = 0.01),4),45,4)[which.max(power_pT[,c(1,3)])]
-  pT_c<-c(0.35,0.65)[ceiling(which.max(power_pT[,c(1,3)])/45)]
+  muT_c<-matrix(rep(seq(-0.32,0.32,by = 0.02),4),33,4)[which.max(power_pT[,c(1,3)])]
+  pT_c<-c(0.3,0.7)[ceiling(which.max(power_pT[,c(1,3)])/33)]
 }
 
 ###Grid Searching
