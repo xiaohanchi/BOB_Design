@@ -8,7 +8,7 @@
 ################################################################################
 
 ###===========================Simulation Settings============================###
-maxnsample=400#max sample size
+maxnsample=160#max sample size
 Tmax=4 #stages
 nsample=maxnsample/Tmax#sample size per stage
 pT=0.5
@@ -29,24 +29,43 @@ muR<-solvemu(pR,overallmuR,tau2,rho)
 sigmaR<-sqrt(tau2-pR*(1-pR)*(muR[1]-muR[2])**2)
 
 ###===========================Posterior Function============================###
-posterior_muR<-function(mu){
-  xstd<-(mu-xbarR)/sdR
-  r<-dt(xstd,nR)/sdR
+##asymptotic cdf of muT-muR
+Pr_dmu<-function(x){
+  mean=xbarT - xbarR
+  sd=sqrt((nR-1)*(varT+varR)/nR^2)
+  r<-pnorm(q = x,mean = mean,sd = sd)
   return(r)
 }
 
-Prmud<-function(x){
-  b1 <- (x-0.223-xbarT)/sdT
-  b2 <- (x+0.223-xbarT)/sdT
-  r1 <- posterior_muR(x)
-  r2 <- pt(b2,nT)-pt(b1,nT)
-  r <- r1*r2
-  return(r)
+##pdf of (delta*sigmaR)
+dist_delta_sigmaR<-function(delta,nR,varR,y){
+  alpha=nR/2
+  beta=(nR-1)*varR/2
+  loga<-alpha*log(beta)
+  logb<-2*alpha*log(abs(delta))+log(2)
+  if(delta>0){
+    logc<-(2*alpha+1)*log(y)
+  }else if(delta<0){
+    logc<-(2*alpha+1)*log(-y)
+  }
+  log_val<-loga+logb-logc-log(gamma(alpha))-beta*delta^2/y^2
+  val<-exp(log_val)
+  return(val)
+}
+
+##integrand of upper or lower limit
+#delta here = (muT-muR)/sigma0
+f_upper<-function(y2){
+  (1-Pr_dmu(y2))*dist_delta_sigmaR(delta = 0.4,nR = nR,varR = varR,y = y2)
+}
+
+f_lower<-function(y1){
+  Pr_dmu(y1)*dist_delta_sigmaR(delta = -0.4,nR = nR,varR = varR,y = y1)
 }
 
 ###========================Simulation Implementation=========================###
-for(i in 1:3){
-  overallmuT<- c(-0.223,0.223,0)[i]
+for(j in 1:3){
+  overallmuT<- c(-0.32,0.32,0)[j]
   muT<-solvemu(pT,overallmuT,tau2,rho)
   sigmaT<-sqrt(tau2-pT*(1-pT)*(muT[1]-muT[2])**2)
   for(t in 1:Tmax){
@@ -70,12 +89,14 @@ for(i in 1:3){
       dataxT <- sampleTe[,i]
       nT<-length(dataxT)
       xbarT<-mean(dataxT)
-      sdT<-sqrt((nT-1)*var(dataxT)/nT^2)
+      varT<-var(dataxT)
+      
       dataxR <- sampleRe[,i]
       nR<-length(dataxR)
       xbarR<-mean(dataxR)
-      sdR<-sqrt((nR-1)*var(dataxR)/nR^2)
-      mu_bios[i]<-integrate(Prmud,-5,5)$value
+      varR<-var(dataxR)
+      
+      mu_bios[i]<- 1 - integrate(f_upper,0,1)$value - integrate(f_lower,-1,0)$value
     }
     write.table(mu_bios,file = paste("n",maxnsample,"rho",rho,"muT",overallmuT,"s",t,"mu_bios.txt",sep = ''))
   }
@@ -98,10 +119,10 @@ for(c in 1:3){
         addsample=nsample*t
         Cf<-lambda[m]*(addsample/maxnsample)**gamma[n]
         if(c==1){
-          overallmuT=-0.223
+          overallmuT=-0.32
           mu_bios0<-read.table(paste("n",maxnsample,"rho",rho,"muT",overallmuT,"s",t,"mu_bios.txt",sep = ''))
         }else if(c==2){
-          overallmuT=0.223
+          overallmuT=0.32
           mu_bios0<-read.table(paste("n",maxnsample,"rho",rho,"muT",overallmuT,"s",t,"mu_bios.txt",sep = ''))
         }else if(c==3){
           overallmuT=0
@@ -143,7 +164,7 @@ for(c in 1:3){
 ###Calibration
 TIE<-pmax(errorl,errorr)
 EN<-pmax(muEN_l,muEN_r)
-alpha<-which(TIE<=0.05) 
+alpha<-which(TIE<=0.05) #alpha_mu
 bEP<-max(EP[alpha])-0.01
 power<-which(EP>=bEP)
 r<-intersect(alpha,power)
