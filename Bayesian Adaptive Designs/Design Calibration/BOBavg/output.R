@@ -25,19 +25,19 @@ for(c in 1:5){
         addsample=(maxnsample/Tmax)*t#added up sample size at the current stage
         Cf<-lambda[m]*(addsample/maxnsample)**gamma[n]
         if(c==1){
-          deltamu=-0.223
+          deltamu= -0.32
           mup_bios0<-read.table(paste("deltamu",deltamu,"s",t,".txt",sep = ''))
         }else if(c==2){
-          deltamu=0.223
+          deltamu= 0.32
           mup_bios0<-read.table(paste("deltamu",deltamu,"s",t,".txt",sep = ''))
         }else if(c==3){
           #power
           mup_bios0<-read.table(paste("powers",t,".txt",sep = ''))
         }else if(c==4){
-          deltap=-0.15
+          deltap=-0.2
           mup_bios0<-read.table(paste("deltap",deltap,"s",t,".txt",sep = ''))
         }else if(c==5){
-          deltap=0.15
+          deltap=0.2
           mup_bios0<-read.table(paste("deltap",deltap,"s",t,".txt",sep = ''))
         }
         
