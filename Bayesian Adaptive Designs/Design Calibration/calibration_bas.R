@@ -8,7 +8,7 @@
 ################################################################################
 
 ###===========================Simulation Settings============================###
-maxnsample=400#max sample size
+maxnsample=160#max sample size
 Tmax=4 #stages
 nsample=maxnsample/Tmax#sample size per stage
 pR=0.5
@@ -16,8 +16,8 @@ sn=20000
 
 ###===========================Posterior Function============================###
 Prpd<-function(x){
-  b1<-x-0.15
-  b2<-x+0.15
+  b1<-x-0.20
+  b2<-x+0.20
   r1<-dbeta(x,(sumyR[i]+1),(addsample-sumyR[i]+1))
   r2<-pbeta(b2,(sumyT[i]+1),(addsample-sumyT[i]+1)) - pbeta(b1,(sumyT[i]+1),(addsample-sumyT[i]+1))
   r<-r1*r2
@@ -25,8 +25,8 @@ Prpd<-function(x){
 }
 
 ###========================Simulation Implementation=========================###
-for(i in 1:3){
-  pT=c(0.35,0.65,0.5)[i]
+for(j in 1:3){
+  pT=c(0.30,0.70,0.50)[j]
   for(t in 1:Tmax){
     nsample=maxnsample/Tmax
     addsample=(maxnsample/Tmax)*t
@@ -67,13 +67,13 @@ for(c in 1:3){
         addsample=nsample*t
         Cf<-lambda[m]*(addsample/maxnsample)**gamma[n]
         if(c==1){
-          pT=0.35
+          pT=0.30
           p_bios0<-read.table(paste("n",maxnsample,"pT",pT,"s",t,"p_bios.txt",sep = ''))
         }else if(c==2){
-          pT=0.65
+          pT=0.70
           p_bios0<-read.table(paste("n",maxnsample,"pT",pT,"s",t,"p_bios.txt",sep = ''))
         }else if(c==3){
-          pT=0.5
+          pT=0.50
           p_bios0<-read.table(paste("n",maxnsample,"pT",pT,"s",t,"p_bios.txt",sep = ''))
         }
         if(t!=1){
