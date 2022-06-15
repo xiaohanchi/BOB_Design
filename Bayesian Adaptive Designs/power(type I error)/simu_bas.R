@@ -8,11 +8,11 @@
 ################################################################################
 
 ###===========================Simulation Settings============================###
-maxnsample=400#max sample size
+maxnsample=160#max sample size
 Tmax=4 #stages
 nsample=maxnsample/Tmax#sample size per stage
 pR=0.5
-pT=0.35
+pT=0.3
 overallmuT=0
 overallmuR=0
 lambda=0.9527
@@ -21,8 +21,8 @@ sn=20000
 
 ###===========================Posterior Function============================###
 Prpd<-function(x){
-  b1<-x-0.15
-  b2<-x+0.15
+  b1<-x-0.20
+  b2<-x+0.20
   r1<-dbeta(x,(sumyR[i]+1),(addsample-sumyR[i]+1))
   r2<-pbeta(b2,(sumyT[i]+1),(addsample-sumyT[i]+1)) - pbeta(b1,(sumyT[i]+1),(addsample-sumyT[i]+1))
   r<-r1*r2
@@ -45,6 +45,7 @@ for(t in 1:Tmax){
     sampleTt<-rbind(sampleTt,sampleTt2)
     sampleRt<-rbind(sampleRt,sampleRt2)
   }
+      
   #posterior of diff p
   sumyT<-colSums(sampleTt)
   sumyR<-colSums(sampleRt)
