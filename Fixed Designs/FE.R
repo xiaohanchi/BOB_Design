@@ -7,7 +7,7 @@
 ################################################################################
 
 ###===========================Simulation Settings============================###
-maxnsample=200#max sample size
+maxnsample=160#max sample size
 Tmax=1 #stages
 nsample=maxnsample/Tmax#sample size per stage
 pR=0.5
@@ -24,6 +24,19 @@ solvemu<-function(p,x,tau2,rho){
   mu<-solve(A,b)
   return(mu)
 }
+
+s_ttest<-function(alpha,nT,nR,meanT,meanR,varT,varR,delta){
+  #scaled two sample t test for symmetric delta
+  lambda<-nT*nR*delta**2/(nT+nR)
+  T_stat<-sqrt(nT*nR*(nT+nR-2)/(nT+nR))*(meanT-meanR)/sqrt(varT*(nT-1)+varR*(nR-1))
+  C_value<-sqrt(qf(alpha,1,(nT+nR-2),lambda))
+  if(abs(T_stat) < C_value){
+    return(1)
+  }else{
+    return(0)
+  }
+}
+
 muR<-solvemu(pR,overallmuR,tau2,rho)
 sigmaR<-sqrt(tau2-pR*(1-pR)*(muR[1]-muR[2])**2)
 muT<-solvemu(pT,overallmuT,tau2,rho)
@@ -36,16 +49,17 @@ for(t in 1:Tmax){
   sampleTt<-sapply(1:sn, function(r) rbinom(nsample,1,pT))
   sampleTe<-sapply(1:sn, function(r) rnorm(nsample,(sampleTt[,r]*muT[1]+(1-sampleTt[,r])*muT[2]),sigmaT))
   sampleRt<-sapply(1:sn, function(r) rbinom(nsample,1,pR))
-  sampleRe<-sapply(1:sn, function(r) rnorm(nsample,(sampleRt[,r]*muR[1]+(1-sampleRt[,r])*muR[2]),sigmaR))
+  sampleRe<-sapply(1:sn, function(r) rnorm(nsample,(sampleRt[,r]*muR[1]+(1-sampleRt[,r])*muR[2]),sigmaR))    
   #mu
   datamuT <- lapply(1:sn,function(r) sampleTe[,r])
   datamuR <- lapply(1:sn,function(r) sampleRe[,r])
-  pmu1<-sapply(1:sn,function(r) t.test(datamuT[[r]],datamuR[[r]],alternative = "greater",mu = -0.223)$`p.value`)
-  pmu2<-sapply(1:sn,function(r) t.test(datamuT[[r]],datamuR[[r]],alternative = "less",mu = 0.223)$`p.value`)
-  bios_mu<-intersect(which(pmu1<0.05),which(pmu2<0.05))
-  
+  xbarT <- sapply(1:sn,function(r) mean(datamuT[[r]]))
+  xbarR <- sapply(1:sn,function(r) mean(datamuR[[r]]))
+  varT <- sapply(1:sn,function(r) var(datamuT[[r]]))
+  varR <- sapply(1:sn,function(r) var(datamuR[[r]]))
+  bios_mu<-sapply(1:sn,function(r) s_ttest(0.05,nsample,nsample,xbarT[r],xbarR[r],varT[r],varR[r],0.2/0.5))
   bios<-bios_mu
-  power<-length(bios)/sn
+  power<-sum(bios)/sn
 }
 
 cat("The power (type I error rate) of the design FE:",power,"\n",sep = '')
