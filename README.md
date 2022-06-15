@@ -44,7 +44,7 @@ This folder contains R codes used to implement four Bayesian adaptive designs co
 
 #### Design Calibration
 
-R codes in this folder help us to calibrate the design and return the optimal design parameters ($\lambda, \gamma$). We calibrate Bayesian adaptive designs including BAE, BAS, BOBs,  and BOBavg. In detail, BAE and BAS are Bayesian group-sequential designs that consider the respective efficacy and safety as a single primary endpoint. BOBs  and BOBavg are proposed BOB designs.
+R codes in this folder help us to calibrate the design and return the optimal design parameters ($\lambda, \gamma$). We calibrate Bayesian adaptive designs including BAE, BAS, BOBs, and BOBavg. In detail, BAE and BAS are Bayesian group-sequential designs that consider the respective efficacy and safety as a single primary endpoint. BOBs and BOBavg are proposed BOB designs.
 
 * calibration_bae.R: R codes used to calibrate the design **BAE**, and output the optimal design parameters.
 
@@ -56,9 +56,9 @@ R codes in this folder help us to calibrate the design and return the optimal de
 
   This folder contains 3 files used to implement the whole calibration procedure of the design **BOBavg** with the following settings: 
 
-  * search_1.R: $\mu_T=\pm 0.223$, $p_T \sim unif(0.35,0.65)$
+  * search_1.R: $\mu_T=\pm 0.32$, $p_T \sim unif(0.3,0.7)$
   * search_2.R: $\mu_T=0, p_T=0$ (i.e., power of the design)
-  * search_3.R: $\mu_T \sim unif(-0.223,0.223)$, $p_T=0.5\pm 0.15$
+  * search_3.R: $\mu_T \sim unif(-0.32,0.32)$, $p_T=0.5\pm 0.2$
 
   and the file output.R used to output the optimal design parameters.
 
