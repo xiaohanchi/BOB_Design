@@ -7,7 +7,7 @@
 ################################################################################
 
 ###===========================Simulation Settings============================###
-maxnsample=200#max sample size
+maxnsample=160#max sample size
 Tmax=1 #stages
 nsample=maxnsample/Tmax#sample size per stage
 pR=0.5
@@ -36,9 +36,9 @@ for(t in 1:Tmax){
   #eva of p
   peT<-apply(sampleTt/addsample,2,sum)
   peR<-apply(sampleRt/addsample,2,sum)
-  resultp<-sapply(1:sn, function(r) propt(peT[r],peR[r],deltap=0.15,n=addsample))
+  resultp<-sapply(1:sn, function(r) propt(peT[r],peR[r],deltap=0.20,n=addsample))
   bios_p<-which(resultp==1)
-  
+      
   bios<-bios_p
   power<-length(bios)/sn
 }
