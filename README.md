@@ -95,6 +95,7 @@ Rscript simu_bob.R
 
 ## Authors and Reference
 
-* Xiaohan Chi, Zhangsheng Yu, and Ruitao Lin
+* Chi X, Yu Z, Lin R. BOB: Bayesian optimal design for biosimilar trials with
+co-primary endpoints. /Statistics in Medicine/. 2022;1-16. doi: 10.1002/sim.9571
 
   
